@@ -1,4 +1,4 @@
-/* Copyright (c) 2014, The Linux Foundation. All rights reserved.
+ /* Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -120,6 +120,14 @@ static struct wcd9xxx_mbhc_config wcd9xxx_mbhc_cfg = {
 	.use_vddio_meas = true,
 	.enable_anc_mic_detect = false,
 	.hw_jack_type = FOUR_POLE_JACK,
+	.key_code[0] = KEY_MEDIA,
+	.key_code[1] = KEY_VOICECOMMAND,
+	.key_code[2] = KEY_VOLUMEUP,
+	.key_code[3] = KEY_VOLUMEDOWN,
+	.key_code[4] = 0,
+	.key_code[5] = 0,
+	.key_code[6] = 0,
+	.key_code[7] = 0,
 };
 
 static void *def_codec_mbhc_cal(void)
@@ -177,16 +185,16 @@ static void *def_codec_mbhc_cal(void)
 	btn_high[1] = 330;
 	btn_low[2] = 331;
 	btn_high[2] = 655;
-	btn_low[3] = 105;
-	btn_high[3] = 148;
-	btn_low[4] = 149;
-	btn_high[4] = 189;
-	btn_low[5] = 190;
-	btn_high[5] = 228;
-	btn_low[6] = 229;
-	btn_high[6] = 269;
-	btn_low[7] = 270;
-	btn_high[7] = 500;
+	btn_low[3] = 375;
+	btn_high[3] = 655;
+	btn_low[4] = 656;
+	btn_high[4] = 660;
+	btn_low[5] = 661;
+	btn_high[5] = 670;
+	btn_low[6] = 671;
+	btn_high[6] = 680;
+	btn_low[7] = 681;
+	btn_high[7] = 690;
 	n_ready = wcd9xxx_mbhc_cal_btn_det_mp(btn_cfg, MBHC_BTN_DET_N_READY);
 	n_ready[0] = 80;
 	n_ready[1] = 12;
@@ -569,33 +577,33 @@ static const struct soc_enum msm_snd_enum[] = {
 static int msm_btsco_rate_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
-	pr_debug("%s: msm_btsco_rate  = %d", __func__, msm_btsco_rate);
-	ucontrol->value.integer.value[0] = msm_btsco_rate;
-	return 0;
+        pr_debug("%s: msm_btsco_rate  = %d", __func__, msm_btsco_rate);
+        ucontrol->value.integer.value[0] = msm_btsco_rate;
+        return 0;
 }
 
 static int msm_btsco_rate_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
+				 struct snd_ctl_elem_value *ucontrol)
 {
-	switch (ucontrol->value.integer.value[0]) {
-	case 8000:
-		msm_btsco_rate = BTSCO_RATE_8KHZ;
-		break;
-	case 16000:
-		msm_btsco_rate = BTSCO_RATE_16KHZ;
-		break;
-	default:
-		msm_btsco_rate = BTSCO_RATE_8KHZ;
-		break;
-	}
+        switch (ucontrol->value.integer.value[0]) {
+        case 8000:
+                msm_btsco_rate = BTSCO_RATE_8KHZ;
+                break;
+        case 16000:
+                msm_btsco_rate = BTSCO_RATE_16KHZ;
+                break;
+        default:
+                msm_btsco_rate = BTSCO_RATE_8KHZ;
+                break;
+        }
 
-	pr_debug("%s: msm_btsco_rate = %d\n", __func__, msm_btsco_rate);
-	return 0;
+        pr_debug("%s: msm_btsco_rate = %d\n", __func__, msm_btsco_rate);
+        return 0;
 }
 
 static const char *const btsco_rate_text[] = {"8000", "16000"};
 static const struct soc_enum msm_btsco_enum[] = {
-	SOC_ENUM_SINGLE_EXT(2, btsco_rate_text),
+        SOC_ENUM_SINGLE_EXT(2, btsco_rate_text),
 };
 
 static const struct snd_kcontrol_new msm_snd_controls[] = {
@@ -610,7 +618,7 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 	SOC_ENUM_EXT("SLIM_0_RX SampleRate", msm_snd_enum[4],
 			slim0_rx_sample_rate_get, slim0_rx_sample_rate_put),
 	SOC_ENUM_EXT("Internal BTSCO SampleRate", msm_btsco_enum[0],
-		     msm_btsco_rate_get, msm_btsco_rate_put),
+			msm_btsco_rate_get, msm_btsco_rate_put),
 };
 
 static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
@@ -1397,7 +1405,6 @@ static int msm_quat_mi2s_snd_startup(struct snd_pcm_substream *substream)
 					__func__);
 			goto err;
 		}
-
 		ret = pinctrl_select_state(pdata->pinctrl_info.pinctrl,
 				pdata->pinctrl_info.cdc_lines_act);
 		if (ret < 0) {
@@ -2210,6 +2217,22 @@ static struct snd_soc_dai_link msm8x16_dai[] = {
 		.codec_dai_name = "tfa98xx_codec",
 		.codec_name = "tfa98xx.6-0034",
 	},
+	{ /* hw:x, 28 */
+		.name = "QCHAT",
+		.stream_name = "QCHAT",
+		.cpu_dai_name   = "QCHAT",
+		.platform_name  = "msm-pcm-voice",
+		.dynamic = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_suspend = 1,
+		/* this dainlink has playback support */
+		.ignore_pmdown_time = 1,
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.be_id = MSM_FRONTEND_DAI_QCHAT,
+	},
 	{
 		.name = LPASS_BE_QUAT_MI2S_RX,
 		.stream_name = "Quaternary MI2S Playback",
@@ -2218,7 +2241,6 @@ static struct snd_soc_dai_link msm8x16_dai[] = {
 		.codec_dai_name = "tfa98xx_codec",
 		.codec_name = "tfa98xx.6-0034",
 		.no_pcm = 1,
-		.dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBS_CFS,
 		.be_id = MSM_BACKEND_DAI_QUATERNARY_MI2S_RX,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ops = &msm8x16_quat_mi2s_be_ops,
@@ -2410,6 +2432,7 @@ static bool msm8939_swap_gnd_mic(struct snd_soc_codec *codec)
 		pr_err("failed to configure the gpio\n");
 		return false;
 	}
+
 	value = gpio_get_value_cansleep(pdata->us_euro_gpio);
 	pr_debug("%s: swap select switch %d to %d\n", __func__, value, !value);
 	gpio_direction_output(pdata->us_euro_gpio, !value);
